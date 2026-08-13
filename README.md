@@ -80,3 +80,5 @@ This project is licensed under the **MIT License**.
 ## Credits
 
 Built for the ComfyUI community.
+
+---
