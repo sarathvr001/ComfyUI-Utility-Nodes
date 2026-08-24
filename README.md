@@ -3,80 +3,102 @@
 [![GitHub stars](https://img.shields.io/github/stars/sarathvr001/ComfyUI-Utility-Nodes?style=social)](https://github.com/sarathvr001/ComfyUI-Utility-Nodes)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A collection of practical **utility nodes** for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) designed to make everyday workflows faster and more efficient.
+A modular, extensible collection of **offline, pure Python utility nodes** for [ComfyUI](https://github.com/comfyanonymous/ComfyUI).
 
-These nodes focus on solving common pain points and helping users work smarter — whether you're building complex workflows or just want to save time on repetitive tasks.
-
----
-
-## Features
-
-- Clean and focused utility nodes
-- Designed for real-world workflow speedups
-- Easy to use and integrate into existing graphs
-- Actively maintained
+No heavy AI model checkpoints, no external network calls, and zero model downloading required. Everything runs locally, instantly, and efficiently.
 
 ---
 
-## Installation
+## 📂 Architecture
 
-### Method 1: ComfyUI Manager (Recommended)
+`ComfyUI-Utility-Nodes` is built with a clean, modular folder architecture where each node has its own directory and decoupled logic:
 
-1. Open **ComfyUI Manager**
-2. Search for `ComfyUI-Utility-Nodes`
-3. Click **Install**
-4. Restart ComfyUI
+```
+ComfyUI-Utility-Nodes/
+├── __init__.py                # Auto-discovers and registers all nodes dynamically
+├── requirements.txt           # Minimal core dependencies (numpy, pillow, scipy)
+├── README.md
+├── utils/                     # Shared utilities
+│   ├── __init__.py
+│   ├── color_utils.py         # Color space, hex parser, perceptual delta, auto-border sampling
+│   └── image_ops.py           # Tensor conversions, Gaussian feathering, morphology, defringing
+└── nodes/                     # Dedicated folders for each node
+    ├── __init__.py            # Node discovery aggregator
+    └── bg_remover/            # Background Remover Node
+        ├── __init__.py        # Node export mappings
+        ├── node.py            # ComfyUI Node definition (inputs, outputs, execution)
+        └── processor.py       # Offline image processing algorithms
+```
+
+### Adding a New Node
+1. Create a folder under `nodes/<your_node_name>/`.
+2. Implement your logic in `node.py` and `processor.py`.
+3. Export `NODE_CLASS_MAPPINGS` and `NODE_DISPLAY_NAME_MAPPINGS` in `nodes/<your_node_name>/__init__.py`.
+4. The root loader automatically discovers and registers your node!
+
+---
+
+## 🛠 Available Nodes
+
+| Node Name | Display Name | Category | Description |
+| :--- | :--- | :--- | :--- |
+| `BGRemoverUtilityNode` | **Background Remover (Offline)** | `Utility/Image` | Fast, 100% offline background remover with flood fill, chroma key, luminance thresholding, defringing, and edge feathering. |
+
+---
+
+## 🌟 Node Guide: Background Remover (Offline)
+
+### Features
+- **Auto Border Flood Fill**: Automatically detects background color from the 4 image borders/corners and flood-fills connected background regions without erasing matching colors inside the subject.
+- **Color Key / Chroma Key**: Removes background by target color (Green Screen, Blue Screen, White, Black, Magenta, or Custom Hex).
+- **Luminance Keying**: Threshold-based separation for bright/white or dark/black studio backgrounds.
+- **GrabCut Segmentation**: Iterative foreground extraction.
+- **Mask Refinement**:
+  - `edge_feather`: Soft Gaussian blending along edges.
+  - `shrink_expand`: Morphological erosion/dilation to trim or expand borders.
+  - `spill_suppress`: Cleans background color fringe (e.g. green cast) from foreground edges.
+  - `invert_mask`: Easily invert foreground and background.
+  - `background_fill`: Choose between Transparent (RGBA PNG), Black, White, or Custom Hex background fill.
+
+### Inputs
+- `image`: Image tensor (`IMAGE`).
+- `method`: Extraction algorithm (`Auto Border Flood`, `Color Key / Chroma`, `Luminance (Bright BG)`, `Luminance (Dark BG)`, `GrabCut (Subject Extraction)`).
+- `key_color`: Color preset or `Auto Detect` / `Custom Hex`.
+- `custom_hex`: Custom hex color code (e.g. `#00FF00` or `#FFFFFF`).
+- `tolerance`: Color sensitivity threshold (`0.0` to `1.0`).
+- `edge_feather`: Edge softening radius.
+- `shrink_expand`: Mask contraction/expansion (`-50` to `50`).
+- `spill_suppress`: Remove color cast from edge pixels.
+- `invert_mask`: Flip mask output.
+- `background_fill`: Output background replacement (`Transparent`, `Black`, `White`, `Custom Hex`).
+
+### Outputs
+- `rgba_image`: 4-channel RGBA image tensor with transparent alpha channel (ready for PNG export).
+- `mask`: 1-channel alpha mask tensor (`MASK`).
+- `rgb_image`: 3-channel RGB image tensor composited with chosen background fill.
+
+---
+
+## 🚀 Installation
+
+### Method 1: ComfyUI Manager
+Search for `ComfyUI-Utility-Nodes` and click **Install**.
 
 ### Method 2: Manual Installation
-
 ```bash
 cd ComfyUI/custom_nodes
 git clone https://github.com/sarathvr001/ComfyUI-Utility-Nodes.git
+```
+
+Dependencies (standard with ComfyUI):
+```bash
+pip install -r requirements.txt
 ```
 
 Restart ComfyUI after installation.
 
 ---
 
-## Nodes
-
-| Node Name   | Description                                |
-| ----------- | ------------------------------------------ |
-| Coming Soon | More utility nodes will be added regularly |
-
-> This repository is under active development. New nodes will be added over time.
-
----
-
-## Usage
-
-1. Right-click in ComfyUI → search under the category **Utility** (or the category you defined)
-2. Add the node to your workflow
-3. Connect inputs and outputs as needed
-
-Example workflows and screenshots will be added soon.
-
----
-
-## Requirements
-
-- ComfyUI (latest version recommended)
-
----
-
-## Contributing
-
-Suggestions and pull requests are welcome!  
-If you have ideas for useful utility nodes, feel free to open an issue.
-
----
-
-## License
+## 📜 License
 
 This project is licensed under the **MIT License**.
-
----
-
-## Credits
-
-Built for the ComfyUI community.
